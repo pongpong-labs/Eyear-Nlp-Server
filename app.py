@@ -7,35 +7,41 @@ from pykospacing import spacing
 
 app = Flask(__name__)
 
+
 model = Word2Vec.load('psychology.model')
 
 tagger = Mecab()
 
+
 text_list = []
-with open('analysis_token.txt', 'r', encoding='utf-8') as f:
+with open('analysis_token.txt', 'r', encoding = 'utf-8') as f:
     for line in f:
         text_list.append(line.rstrip())
-
+    
+    
 except_words = []
-with open('except_word.txt', 'r', encoding='utf-8') as f:
+with open('except_word.txt', 'r', encoding = 'utf-8') as f:
     except_words = []
     for line in f:
         except_words.append(line.rstrip())
 
+        
 josa_eomi = []
-with open('josaeomi.txt", 'r', encoding='utf-8') as f:
+with open("josaeomi.txt",'r', encoding = 'utf-8') as f:
     for line in f:
         josa_eomi.append(line.rstrip())
 
 
+
 # MAIN
-def find_error_word():  # 오류가 있는지 확인
+def find_error_word(): #오류가 있는지 확인
     global error_word
-    error_word = []  # 오류단어를 저장
+    error_word = [] #오류단어를 저장
     for i in jamak_nouns:
         if i not in text_list:
             error_word.append(i)
     return error_word
+
 
 
 def comb_error_word():
@@ -48,21 +54,22 @@ def comb_error_word():
             if error_word[i] == jamak[j]:
                 comb1 = []
                 comb2 = []
-
+                
                 k = 0
                 while jamak[j + k] not in josa_eomi:
                     real_err_word1 = jamak[j + k]
                     comb1.append(real_err_word1)
                     k += 1
-
+                    
                 k = 1
                 while jamak[j - k] not in josa_eomi:
                     real_err_word2 = jamak[j - k]
-                    comb2.insert(0, real_err_word2)
+                    comb2.insert(0,real_err_word2)
                     k += 1
-
+                    
                 err_comb.append(comb2 + comb1)
-
+                
+    
     for i in range(len(err_comb)):
         err_comb[i] = ''.join(err_comb[i])
     for v in err_comb:
@@ -71,18 +78,17 @@ def comb_error_word():
     return err_word
 
 
-def nearby_error_word():  # 오류 단어 앞뒤의 3단어 뽑기
+def nearby_error_word(): #오류 단어 앞뒤의 3단어 뽑기
     global check_nouns
-    check_nouns = []  # 오류단어 앞뒤의 단어 저장
+    check_nouns = []#오류단어 앞뒤의 단어 저장
     if err_word == []:
         return []
     else:
         for i in range(len(err_word)):
             for j in range(len(line_space)):
-                if err_word[i] == line_space[j] or err_word[i] in tagger.nouns(line_space[j]) or error_word[
-                    i] in tagger.nouns(line_space[j]):
+                if err_word[i] == line_space[j] or err_word[i] in tagger.nouns(line_space[j]) or error_word[i] in tagger.nouns(line_space[j]):
                     check_nouns_list = []
-                    if j == len(line_space) - 1:
+                    if j == len(line_space)-1:
                         try:
                             li1 = tagger.nouns(line_space[j - 1])
                             li2 = tagger.nouns(line_space[j - 2])
@@ -90,10 +96,10 @@ def nearby_error_word():  # 오류 단어 앞뒤의 3단어 뽑기
                             li4 = tagger.nouns(line_space[j - 4])
                             li5 = tagger.nouns(line_space[j - 5])
                             li6 = tagger.nouns(line_space[j - 6])
-                            check_nouns_list.extend(li1 + li2 + li3 + li4 + li5 + li6)
+                            check_nouns_list.extend(li1+li2+li3+li4+li5+li6)
                         except:
                             pass
-
+                        
                     elif j == len(line_space) - 2:
                         try:
                             li1 = tagger.nouns(line_space[j - 1])
@@ -102,10 +108,10 @@ def nearby_error_word():  # 오류 단어 앞뒤의 3단어 뽑기
                             li4 = tagger.nouns(line_space[j - 3])
                             li5 = tagger.nouns(line_space[j - 4])
                             li6 = tagger.nouns(line_space[j - 5])
-                            check_nouns_list.extend(li1 + li2 + li3 + li4 + li5 + li6)
+                            check_nouns_list.extend(li1+li2+li3+li4+li5+li6)
                         except:
                             pass
-
+                        
                     else:
                         try:
                             li1 = tagger.nouns(line_space[j - 1])
@@ -114,17 +120,16 @@ def nearby_error_word():  # 오류 단어 앞뒤의 3단어 뽑기
                             li4 = tagger.nouns(line_space[j + 2])
                             li5 = tagger.nouns(line_space[j - 3])
                             li6 = tagger.nouns(line_space[j - 4])
-                            check_nouns_list.extend(li1 + li2 + li3 + li4 + li5 + li6)
+                            check_nouns_list.extend(li1+li2+li3+li4+li5+li6)
                         except:
                             pass
-
-                    check_nouns.append(check_nouns_list)
+                        
+                    check_nouns.append(check_nouns_list)    
                     if check_nouns[0] == []:
                         return []
     return check_nouns
-
-
-def check_word_list():  # 오류 단어 근처의 단어에 대해 word2vec으로 학습한 연관성 높은 단어의 리스트를 출력
+                                       
+def check_word_list(): #오류 단어 근처의 단어에 대해 word2vec으로 학습한 연관성 높은 단어의 리스트를 출력
     global word_list
     word_list = []
     global model_result
@@ -143,16 +148,19 @@ def check_word_list():  # 오류 단어 근처의 단어에 대해 word2vec으�
                 except:
                     pass
             word_list.append(list_result)
-
+            
+            
             if list_result == []:
                 return []
-
+            
     return word_list
 
 
-def romanizing():  # word_list의 한글 발음을 로마자로 변환
+
+
+def romanizing(): #word_list의 한글 발음을 로마자로 변환
     global pronounce
-    pronounce = []  # word_list의 발음을 저장.
+    pronounce = [] # word_list의 발음을 저장.
     if word_list == []:
         return []
     else:
@@ -168,13 +176,15 @@ def romanizing():  # word_list의 한글 발음을 로마자로 변환
     return pronounce
 
 
-def similarity():  # error word와 word list 단어의 발음 유사도 측정
+                                       
+
+def similarity(): #error word와 word list 단어의 발음 유사도 측정
     global probability
     probability = []
-
+    
     if pronounce == []:
         return []
-
+    
     else:
         for e in range(len(err_word)):
             a = Romanizer(err_word[e]).romanize()
@@ -186,7 +196,7 @@ def similarity():  # error word와 word list 단어의 발음 유사도 측정
                 for j in range(len(pronounce[e])):
                     prob1.append(jellyfish.jaro_winkler_similarity(a, pronounce[e][j]))
                     prob2.append(jellyfish.jaro_similarity(a, pronounce[e][j]))
-                    prob3.append(1 - (jellyfish.levenshtein_distance(a, pronounce[e][j])) / 7)
+                    prob3.append(1-(jellyfish.levenshtein_distance(a,pronounce[e][j]))/7)
                     prob.append(prob3[j] + (prob1[j] + prob2[j]))
                 probability.append(prob)
             except:
@@ -195,15 +205,16 @@ def similarity():  # error word와 word list 단어의 발음 유사도 측정
             return []
     return probability
 
+                                       
 
-def word_change():  # 오류단어를 교체
+def word_change(): #오류단어를 교체
     global correct_word
     global line_space
     correct_word = []
-
+    
     if probability == []:
         return line_space
-
+    
     else:
         change_word = []
         try:
@@ -219,13 +230,12 @@ def word_change():  # 오류단어를 교체
             pass
     return line_space
 
-
 def word_change2():
     global line_space
-
+    
     if probability == []:
         return line_space
-
+    
     else:
         try:
             line_space = word_change()
@@ -238,9 +248,8 @@ def word_change2():
                         line_space = line_nnn
         except:
             pass
-
+                    
     return line_space
-
 
 def process(line):
     global jamak_nouns
@@ -248,28 +257,28 @@ def process(line):
     global line_for_space
     global line_space
     global change_word2
-
-    jamak_nn = tagger.nouns(line)  # 자막에 나오는 의미있는 명사를 찾기
+    
+    jamak_nn = tagger.nouns(line) #자막에 나오는 의미있는 명사를 찾기
     line_for_space = line.split(' ')
     line_space = line_for_space.copy()
 
     for i in range(len(line_for_space)):
         if 2 * i < len(line_for_space):
             line_for_space.insert(2 * i + 1, 'space')
-
+        
     for i in range(len(line_for_space)):
         line_for_space[i] = tagger.morphs(line_for_space[i])
-
-    line_space_include = sum(line_for_space, [])
+        
+    line_space_include = sum(line_for_space,[])
     jamak_nn = tagger.nouns(line)
     space_jamak = ''.join(line_space_include)
-
-    jamak_nouns = []
+    
+    jamak_nouns=[]
     for w in jamak_nn:
         if w not in except_words:
             jamak_nouns.append(w)
 
-    if tagger.morphs(space_jamak) != []:  # 자막문장을 품사별로 끊기
+    if tagger.morphs(space_jamak) != []: #자막문장을 품사별로 끊기
         jamak = tagger.morphs(space_jamak)
 
     error_word = find_error_word()
@@ -289,13 +298,14 @@ def process(line):
 
     return result
 
-
 @app.route("/correctSubtitle", methods=['POST'])
+
 def correctSubtitle():
     params = request.get_json()
     result = process(params['subtitle'])
-    return {'result': result}
-
-
+    return {'result':result}
+    
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=8000, debug=False)
+    app.run(host='0.0.0.0', port=8000,debug=False)
+
+
